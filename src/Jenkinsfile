@@ -1,0 +1,52 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_HUB_USER = 'senthamizhan14git i'
+        IMAGE_NAME = 'food-ordering-system'
+        IMAGE_TAG = "${env.BUILD_NUMBER}"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git 'https://github.com/AnandThiru-5566/Food-Ordering.git'
+            }
+        }
+
+        stage('Build & Test') {
+            steps {
+                // Runs Maven clean and JUnit tests
+                sh 'mvn clean package'
+            }
+            post {
+                always {
+                    junit '**/target/surefire-reports/*.xml'
+                }
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                sh "docker build -t ${DOCKER_HUB_USER}/${IMAGE_NAME}:${IMAGE_TAG} ."
+            }
+        }
+
+        stage('Docker Push') {
+            steps {
+                // Ensure you have configured Docker Hub credentials in Jenkins
+                withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
+                    sh "echo \$PASS | docker login -u \$USER --password-stdin"
+                    sh "docker push ${DOCKER_HUB_USER}/${IMAGE_NAME}:${IMAGE_TAG}"
+                }
+            }
+        }
+
+        stage('K8s Deployment') {
+            steps {
+                // Applies the YAML file to your cluster
+                sh "kubectl apply -f deployment.yaml"
+            }
+        }
+    }
+}
