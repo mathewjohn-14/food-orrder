@@ -10,7 +10,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/AnandThiru-5566/Food-Ordering.git'
+                git 'https://github.com/mathewjohn-14/food-orrder.git'
             }
         }
 
